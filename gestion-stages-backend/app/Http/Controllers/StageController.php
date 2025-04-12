@@ -144,3 +144,4 @@ class StageController extends Controller
 
         return response()->json(['message' => 'Stage évalué avec succès', 'stage' => $stage]);
     }
+}

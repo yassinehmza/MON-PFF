@@ -130,3 +130,4 @@ class DocumentController extends Controller
 
         return response()->json(['message' => 'Document validé avec succès', 'document' => $document]);
     }
+}

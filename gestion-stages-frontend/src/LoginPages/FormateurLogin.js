@@ -1,13 +1,18 @@
 import React, { useState } from 'react';
 import { Eye, EyeOff } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { authService } from '../services/api';
 import logoOFPPT from '../assets/logo-ofppt.png';
 
 
 function FormateurLogin() {
+  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
+  const [loading, setLoading] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   const validateForm = () => {
     const newErrors = {};
@@ -28,10 +33,21 @@ function FormateurLogin() {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (validateForm()) {
-      console.log('Formulaire soumis:', { email });
+      setLoading(true);
+      setLoginError('');
+      
+      try {
+        await authService.loginFormateur(email, password);
+        navigate('/formateur/dashboard'); // Redirect to instructor dashboard after successful login
+      } catch (error) {
+        console.error('Login error:', error);
+        setLoginError(error.message || 'Les informations d\'identification fournies sont incorrectes.');
+      } finally {
+        setLoading(false);
+      }
     }
   };
 
@@ -145,12 +161,20 @@ function FormateurLogin() {
                 </button>
               </div>
 
+              {/* Message d'erreur de connexion */}
+              {loginError && (
+                <div className="p-3 bg-red-50 text-red-700 rounded-lg text-sm">
+                  {loginError}
+                </div>
+              )}
+              
               {/* Bouton de Connexion */}
               <button
                 type="submit"
-                className="w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150 transform hover:scale-[1.02]"
+                disabled={loading}
+                className={`w-full flex justify-center py-3 px-4 border border-transparent rounded-xl shadow-sm text-sm font-medium text-white bg-green-700 hover:bg-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition-all duration-150 transform hover:scale-[1.02] ${loading ? 'opacity-70 cursor-not-allowed' : ''}`}
               >
-                Se connecter
+                {loading ? 'Connexion en cours...' : 'Se connecter'}
               </button>
             </form>
 
