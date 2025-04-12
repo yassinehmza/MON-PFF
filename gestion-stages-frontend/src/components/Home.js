@@ -57,16 +57,19 @@ function Home() {
                 </linearGradient>
               </defs>
               
-              {/* Fond et éléments décoratifs avec motifs améliorés */}
+              {/* Fond avec effet parallaxe */}
               <rect x="50" y="50" width="700" height="500" rx="30" fill="url(#grad2)">
                 <animate attributeName="opacity" values="0.8;0.9;0.8" dur="4s" repeatCount="indefinite" />
+                <animate attributeName="transform" type="translate" values="0,0; 2,-2; 0,0" dur="6s" repeatCount="indefinite" />
               </rect>
               
-              {/* Lignes ondulées animées */}
+              {/* Lignes ondulées avec effet de flottement amélioré */}
               <path d="M100 150 Q400 50 700 150" stroke="url(#grad1)" strokeWidth="3" fill="none" opacity="0.4">
                 <animate attributeName="d" dur="10s" repeatCount="indefinite"
-                  values="M100 150 Q400 50 700 150;M100 170 Q400 70 700 170;M100 150 Q400 50 700 150" />
+                  values="M100 150 Q400 50 700 150;M100 170 Q400 70 700 170;M100 150 Q400 50 700 150"
+                  calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" />
                 <animate attributeName="opacity" values="0.4;0.6;0.4" dur="5s" repeatCount="indefinite" />
+                <animate attributeName="stroke-dasharray" values="0,1000;1000,0;0,1000" dur="8s" repeatCount="indefinite" />
               </path>
               <path d="M100 450 Q400 550 700 450" stroke="url(#grad1)" strokeWidth="3" fill="none" opacity="0.4">
                 <animate attributeName="d" dur="8s" repeatCount="indefinite"
@@ -74,18 +77,21 @@ function Home() {
                 <animate attributeName="opacity" values="0.4;0.6;0.4" dur="6s" repeatCount="indefinite" />
               </path>
               
-              {/* Motifs géométriques supplémentaires */}
+              {/* Motifs géométriques avec micro-animations */}
               <path d="M50 100 L100 100" stroke="url(#grad1)" strokeWidth="2" opacity="0.3">
                 <animate attributeName="opacity" values="0.3;0.5;0.3" dur="3s" repeatCount="indefinite" />
+                <animate attributeName="stroke-width" values="2;3;2" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="transform" type="translate" values="0,0; 5,0; 0,0" dur="4s" repeatCount="indefinite" />
               </path>
               <path d="M700 500 L650 500" stroke="url(#grad1)" strokeWidth="2" opacity="0.3">
                 <animate attributeName="opacity" values="0.3;0.5;0.3" dur="3s" repeatCount="indefinite" />
               </path>
               
-              {/* Motifs de fond améliorés avec animations */}
+              {/* Motifs de fond avec effets de profondeur et particules */}
               <circle cx="200" cy="100" r="15" fill="#818CF8" opacity="0.2" className="animate-pulse-slow">
-                <animate attributeName="r" values="15;17;15" dur="3s" repeatCount="indefinite" />
+                <animate attributeName="r" values="15;17;15" dur="3s" repeatCount="indefinite" calcMode="spline" keySplines="0.4 0 0.6 1; 0.4 0 0.6 1" />
                 <animate attributeName="opacity" values="0.2;0.3;0.2" dur="3s" repeatCount="indefinite" />
+                <animate attributeName="filter" values="blur(0px);blur(2px);blur(0px)" dur="4s" repeatCount="indefinite" />
               </circle>
               <circle cx="600" cy="500" r="20" fill="#60A5FA" opacity="0.2" className="animate-pulse-slow">
                 <animate attributeName="r" values="20;22;20" dur="4s" repeatCount="indefinite" />
@@ -200,10 +206,119 @@ function Home() {
               {/* Bureau avec ombre, reflets et accessoires */}
               <rect x="200" y="320" width="400" height="20" rx="5" fill="#E5E7EB">
                 <animate attributeName="opacity" values="0.9;1;0.9" dur="3s" repeatCount="indefinite" />
+                <animate attributeName="y" values="320;322;320" dur="4s" repeatCount="indefinite" />
+                <animate attributeName="filter" values="blur(0px);blur(1px);blur(0px)" dur="5s" repeatCount="indefinite" />
               </rect>
+              
+              {/* Effet de brillance sur le bureau */}
+              <ellipse cx="400" cy="320" rx="200" ry="10" fill="url(#grad1)" opacity="0.1">
+                <animate attributeName="opacity" values="0.1;0.2;0.1" dur="4s" repeatCount="indefinite" />
+                <animate attributeName="ry" values="10;12;10" dur="3s" repeatCount="indefinite" />
+              </ellipse>
+
+              {/* Code animé sur l'écran d'ordinateur */}
+              <g transform="translate(180, 280)">
+                <rect width="120" height="80" rx="5" fill="#1E3A8A" />
+                <g fill="#FFFFFF" opacity="0.8">
+                  <rect x="10" y="10" width="80" height="3">
+                    <animate attributeName="width" values="80;60;80" dur="4s" repeatCount="indefinite" />
+                  </rect>
+                  <rect x="10" y="20" width="60" height="3">
+                    <animate attributeName="width" values="60;40;60" dur="3s" repeatCount="indefinite" />
+                  </rect>
+                  <rect x="10" y="30" width="70" height="3">
+                    <animate attributeName="width" values="70;50;70" dur="3.5s" repeatCount="indefinite" />
+                  </rect>
+                </g>
+              </g>
+
+              {/* Notes animées sur le bloc-notes */}
+              <g transform="translate(500, 280)">
+                <rect width="100" height="120" rx="5" fill="#F3F4F6" />
+                <g stroke="#4B5563" strokeWidth="1.5" opacity="0.6">
+                  <path d="M10 20 L90 20">
+                    <animate attributeName="stroke-dasharray" values="80;0;80" dur="4s" repeatCount="indefinite" />
+                  </path>
+                  <path d="M10 40 L70 40">
+                    <animate attributeName="stroke-dasharray" values="60;0;60" dur="3.5s" repeatCount="indefinite" />
+                  </path>
+                  <path d="M10 60 L80 60">
+                    <animate attributeName="stroke-dasharray" values="70;0;70" dur="4.5s" repeatCount="indefinite" />
+                  </path>
+                </g>
+              </g>
+
+              {/* Effets de lumière ambiante */}
+              <defs>
+                <radialGradient id="ambient" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#60A5FA" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="#60A5FA" stopOpacity="0" />
+                </radialGradient>
+              </defs>
+              <circle cx="400" cy="300" r="150" fill="url(#ambient)">
+                <animate attributeName="opacity" values="0.3;0.5;0.3" dur="5s" repeatCount="indefinite" />
+              </circle>
               <rect x="220" y="340" width="360" height="10" rx="2" fill="#9CA3AF" opacity="0.3">
                 <animate attributeName="opacity" values="0.3;0.4;0.3" dur="2s" repeatCount="indefinite" />
+                <animate attributeName="y" values="340;342;340" dur="4s" repeatCount="indefinite" />
               </rect>
+
+              {/* Éléments interactifs supplémentaires */}
+              <g className="animate-float-slow">
+                {/* Icônes flottantes */}
+                <circle cx="180" cy="280" r="15" fill="#60A5FA" opacity="0.6">
+                  <animate attributeName="r" values="15;17;15" dur="3s" repeatCount="indefinite" />
+                  <animate attributeName="cy" values="280;275;280" dur="4s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="220" cy="260" r="12" fill="#818CF8" opacity="0.6">
+                  <animate attributeName="r" values="12;14;12" dur="2.5s" repeatCount="indefinite" />
+                  <animate attributeName="cy" values="260;255;260" dur="3.5s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="580" cy="280" r="15" fill="#60A5FA" opacity="0.6">
+                  <animate attributeName="r" values="15;17;15" dur="3s" repeatCount="indefinite" />
+                  <animate attributeName="cy" values="280;275;280" dur="4s" repeatCount="indefinite" />
+                </circle>
+              </g>
+
+              {/* Particules animées */}
+              <g className="animate-pulse-slow">
+                <circle cx="250" cy="200" r="3" fill="#60A5FA" opacity="0.4">
+                  <animate attributeName="cy" values="200;190;200" dur="3s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="550" cy="220" r="3" fill="#818CF8" opacity="0.4">
+                  <animate attributeName="cy" values="220;210;220" dur="2.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;0.6;0.4" dur="2.5s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="400" cy="180" r="3" fill="#4F46E5" opacity="0.4">
+                  <animate attributeName="cy" values="180;170;180" dur="3.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;0.6;0.4" dur="3.5s" repeatCount="indefinite" />
+                </circle>
+              </g>
+
+              {/* Effets de lumière et de brillance */}
+              <defs>
+                <radialGradient id="glow1" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                  <stop offset="0%" style={{stopColor: '#60A5FA', stopOpacity: 0.4}} />
+                  <stop offset="100%" style={{stopColor: '#60A5FA', stopOpacity: 0}} />
+                </radialGradient>
+                <radialGradient id="glow2" cx="50%" cy="50%" r="50%" fx="50%" fy="50%">
+                  <stop offset="0%" style={{stopColor: '#818CF8', stopOpacity: 0.4}} />
+                  <stop offset="100%" style={{stopColor: '#818CF8', stopOpacity: 0}} />
+                </radialGradient>
+              </defs>
+
+              {/* Effets de lumière animés */}
+              <g className="animate-pulse-slow">
+                <circle cx="300" cy="200" r="60" fill="url(#glow1)">
+                  <animate attributeName="r" values="60;65;60" dur="4s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4s" repeatCount="indefinite" />
+                </circle>
+                <circle cx="500" cy="200" r="60" fill="url(#glow2)">
+                  <animate attributeName="r" values="60;65;60" dur="4.5s" repeatCount="indefinite" />
+                  <animate attributeName="opacity" values="0.4;0.6;0.4" dur="4.5s" repeatCount="indefinite" />
+                </circle>
+              </g>
 
               {/* Accessoires de bureau animés */}
               <g className="animate-float-slow">
@@ -371,7 +486,7 @@ function Home() {
                   <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 6a3.75 3.75 0 11-7.5 0 3.75 3.75 0 017.5 0zM4.501 20.118a7.5 7.5 0 0114.998 0A17.933 17.933 0 0112 21.75c-2.676 0-5.216-.584-7.499-1.632z" />
                 </svg>
               </div>
-              <h3 className="text-2xl font-bold text-gray-900">Espace Étudiant</h3>
+              <h3 className="text-2xl font-bold text-gray-900">Espace Stagiaire</h3>
               <p className="text-gray-600 mt-2">Consultez vos stages et documents</p>
               <button className="mt-6 px-6 py-3 bg-orange-700 text-white rounded-xl hover:bg-orange-800 transition-colors">
                 Connectez-vous
@@ -380,6 +495,113 @@ function Home() {
           </Link>
         </div>
       </main>
+
+      <footer className="bg-gray-900 text-white py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+            {/* À propos de l'OFPPT */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">À propos de l'OFPPT</h3>
+              <p className="text-gray-400 text-sm leading-relaxed">
+                L'OFPPT est un établissement public marocain leader dans la formation professionnelle, 
+                offrant des programmes de formation diversifiés et adaptés aux besoins du marché du travail.
+              </p>
+            </div>
+
+            {/* Liens Rapides */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Liens Rapides</h3>
+              <ul className="space-y-2">
+                <li>
+                  <a href="/stages" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Offres de stages
+                  </a>
+                </li>
+                <li>
+                  <a href="/formations" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Nos formations
+                  </a>
+                </li>
+                <li>
+                  <a href="/actualites" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    Actualités
+                  </a>
+                </li>
+                <li>
+                  <a href="/faq" className="text-gray-400 hover:text-white transition-colors text-sm">
+                    FAQ
+                  </a>
+                </li>
+              </ul>
+            </div>
+
+            {/* Contact */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Contact</h3>
+              <ul className="space-y-2 text-sm text-gray-400">
+                <li className="flex items-center">
+                  <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path fillRule="evenodd" d="M5.05 4.05a7 7 0 119.9 9.9L10 18.9l-4.95-4.95a7 7 0 010-9.9zM10 11a2 2 0 100-4 2 2 0 000 4z" clipRule="evenodd"/>
+                  </svg>
+                  123 Rue de la Formation, Casablanca
+                </li>
+                <li className="flex items-center">
+                  <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2 3a1 1 0 011-1h2.153a1 1 0 01.986.836l.74 4.435a1 1 0 01-.54 1.06l-1.548.773a11.037 11.037 0 006.105 6.105l.774-1.548a1 1 0 011.059-.54l4.435.74a1 1 0 01.836.986V17a1 1 0 01-1 1h-2C7.82 18 2 12.18 2 5V3z"/>
+                  </svg>
+                  +212 5XX-XXXXXX
+                </li>
+                <li className="flex items-center">
+                  <svg className="h-5 w-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z"/>
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z"/>
+                  </svg>
+                  contact@ofppt.ma
+                </li>
+              </ul>
+            </div>
+
+            {/* Réseaux Sociaux */}
+            <div>
+              <h3 className="text-lg font-semibold mb-4">Suivez-nous</h3>
+              <div className="flex space-x-4">
+                <a href="https://facebook.com/ofppt" target="_blank" rel="noopener noreferrer" 
+                   className="text-gray-400 hover:text-white transition-colors">
+                  <span className="sr-only">Facebook</span>
+                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" d="M22 12c0-5.523-4.477-10-10-10S2 6.477 2 12c0 4.991 3.657 9.128 8.438 9.878v-6.987h-2.54V12h2.54V9.797c0-2.506 1.492-3.89 3.777-3.89 1.094 0 2.238.195 2.238.195v2.46h-1.26c-1.243 0-1.63.771-1.63 1.562V12h2.773l-.443 2.89h-2.33v6.988C18.343 21.128 22 16.991 22 12z" clipRule="evenodd"/>
+                  </svg>
+                </a>
+                <a href="https://twitter.com/ofppt" target="_blank" rel="noopener noreferrer" 
+                   className="text-gray-400 hover:text-white transition-colors">
+                  <span className="sr-only">Twitter</span>
+                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M8.29 20.251c7.547 0 11.675-6.253 11.675-11.675 0-.178 0-.355-.012-.53A8.348 8.348 0 0022 5.92a8.19 8.19 0 01-2.357.646 4.118 4.118 0 001.804-2.27 8.224 8.224 0 01-2.605.996 4.107 4.107 0 00-6.993 3.743 11.65 11.65 0 01-8.457-4.287 4.106 4.106 0 001.27 5.477A4.072 4.072 0 012.8 9.713v.052a4.105 4.105 0 003.292 4.022 4.095 4.095 0 01-1.853.07 4.108 4.108 0 003.834 2.85A8.233 8.233 0 012 18.407a11.616 11.616 0 006.29 1.84"/>
+                  </svg>
+                </a>
+                <a href="https://youtube.com/ofppt" target="_blank" rel="noopener noreferrer" 
+                   className="text-gray-400 hover:text-white transition-colors">
+                  <span className="sr-only">YouTube</span>
+                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                  </svg>
+                </a>
+                <a href="#" className="text-gray-400 hover:text-white transition-colors">
+                  <span className="sr-only">LinkedIn</span>
+                  <svg className="h-6 w-6" fill="currentColor" viewBox="0 0 24 24">
+                    <path fillRule="evenodd" d="M19 0h-14c-2.761 0-5 2.239-5 5v14c0 2.761 2.239 5 5 5h14c2.762 0 5-2.239 5-5v-14c0-2.761-2.238-5-5-5zm-11 19h-3v-11h3v11zm-1.5-12.268c-.966 0-1.75-.79-1.75-1.764s.784-1.764 1.75-1.764 1.75.79 1.75 1.764-.783 1.764-1.75 1.764zm13.5 12.268h-3v-5.604c0-3.368-4-3.113-4 0v5.604h-3v-11h3v1.765c1.396-2.586 7-2.777 7 2.476v6.759z" clipRule="evenodd"/>
+                  </svg>
+                </a>
+              </div>
+            </div>
+          </div>
+
+          {/* Copyright */}
+          <div className="border-t border-gray-800 mt-8 pt-8 text-center text-sm text-gray-400">
+            <p>© {new Date().getFullYear()} OFPPT. Tous droits réservés.</p>
+          </div>
+        </div>
+      </footer>
     </div>
   );
 }

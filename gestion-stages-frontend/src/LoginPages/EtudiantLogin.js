@@ -60,7 +60,7 @@ function EtudiantLogin() {
       <main className="pt-24 flex items-center justify-center p-4 min-h-screen">
         <div className="max-w-md w-full">
           <div className="text-center mb-8">
-            <h2 className="text-3xl font-bold text-gray-900">Espace Formateur</h2>
+            <h2 className="text-3xl font-bold text-gray-900">Espace Stagiaire</h2>
             <p className="text-gray-600 mt-2">Plateforme de gestion des stages</p>
           </div>
 
