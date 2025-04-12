@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
 /*
 |--------------------------------------------------------------------------
@@ -14,6 +15,37 @@ use Illuminate\Support\Facades\Route;
 |
 */
 
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
+// Authentication Routes
+Route::post('/login/administrateur', [AuthController::class, 'loginAdministrateur']);
+Route::post('/login/stagiaire', [AuthController::class, 'loginStagiaire']);
+Route::post('/login/formateur', [AuthController::class, 'loginFormateur']);
+
+// Protected Routes for all authenticated users
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/user', [AuthController::class, 'user']);
+    Route::post('/logout', [AuthController::class, 'logout']);
+    
+    // Routes for administrators only
+    Route::middleware('user.type:administrateur')->prefix('admin')->group(function () {
+        // Admin-specific routes go here
+        Route::get('/dashboard', function () {
+            return response()->json(['message' => 'Admin dashboard data']);
+        });
+    });
+    
+    // Routes for students only
+    Route::middleware('user.type:stagiaire')->prefix('etudiant')->group(function () {
+        // Student-specific routes go here
+        Route::get('/dashboard', function () {
+            return response()->json(['message' => 'Student dashboard data']);
+        });
+    });
+    
+    // Routes for instructors only
+    Route::middleware('user.type:formateur')->prefix('formateur')->group(function () {
+        // Instructor-specific routes go here
+        Route::get('/dashboard', function () {
+            return response()->json(['message' => 'Instructor dashboard data']);
+        });
+    });
 });
