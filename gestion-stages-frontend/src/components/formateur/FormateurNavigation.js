@@ -9,7 +9,7 @@ function FormateurNavigation() {
 
   const handleLogout = () => {
     authService.logout();
-    navigate('/formateur/login');
+    navigate('/')
   };
 
   const navigationItems = [

@@ -8,7 +8,7 @@ function AdminNavigation() {
   
   const handleLogout = () => {
     authService.logout();
-    window.location.href = '/admin/login';
+    window.location.href = '/';
   };
 
   const isActiveRoute = (path) => {
