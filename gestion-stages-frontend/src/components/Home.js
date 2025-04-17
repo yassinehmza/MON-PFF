@@ -4,14 +4,15 @@ import logoOFPPT from '../assets/logo-ofppt.png';
 import illustration from '../assets/illustration.svg';
 import Footer from './Footer';
 import About from './About';
-
 function Home() {
   const loginSectionRef = useRef(null);
   const homeRef = useRef(null);
   const aboutRef = useRef(null);
 
   const scrollToSection = (ref) => {
-    ref.current?.scrollIntoView({ behavior: 'smooth' });
+    if (ref && ref.current) {
+      ref.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   return (
@@ -33,7 +34,7 @@ function Home() {
             <div className="flex items-center space-x-8">
               <button onClick={() => scrollToSection(homeRef)} className="text-gray-600 hover:text-gray-900 transition-colors">Home</button>
               <button onClick={() => scrollToSection(aboutRef)} className="text-gray-600 hover:text-gray-900 transition-colors">À propos</button>
-              <Link to="/contact" className="text-gray-600 hover:text-gray-900 transition-colors">Contact</Link>
+
               <button 
                 onClick={() => scrollToSection(loginSectionRef)} 
                 className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
@@ -45,7 +46,7 @@ function Home() {
         </div>
       </header>
 
-      <main ref={homeRef} className="pt-28 flex flex-col items-center justify-center p-6 min-h-screen">
+      <main id="home" ref={homeRef} className="pt-28 flex flex-col items-center justify-center p-6 min-h-screen">
         <div className="flex flex-col md:flex-row items-center justify-between w-full max-w-7xl mx-auto mb-16 px-4">
           <div className="w-full md:w-1/2 text-left md:pr-12 mb-8 md:mb-0">
             <h1 className="text-6xl font-black bg-gradient-to-r from-purple-600 via-indigo-600 to-blue-500 bg-clip-text text-transparent mb-8 leading-tight animate-fade-in tracking-tight">
@@ -269,9 +270,12 @@ function Home() {
         </div>
       </main>
 
-      <div ref={aboutRef}>
+      <div id="about" ref={aboutRef}>
         <About />
       </div>
+
+      
+
       <Footer />
     </div>
   );
