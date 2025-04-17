@@ -47,5 +47,13 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', function () {
             return response()->json(['message' => 'Instructor dashboard data']);
         });
+        Route::get('/profile', function (Request $request) {
+            return response()->json([
+                'nom' => 'Nom du formateur',
+                'prenom' => 'Prénom du formateur',
+                'email' => 'email@example.com',
+                'specialite' => 'Spécialité du formateur'
+            ]);
+        });
     });
 });

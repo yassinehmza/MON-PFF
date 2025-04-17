@@ -6,6 +6,15 @@ import EtudiantLogin from './LoginPages/EtudiantLogin';
 import AdministrateurLogin from './LoginPages/AdministrationLogin';
 import ProtectedRoute from './components/ProtectedRoute';
 import { authService } from './services/api';
+import AdminDashboard from './components/admin/AdminDashboard';
+import UserManagement from './components/admin/UserManagement';
+import StageManagement from './components/admin/StageManagement';
+import DocumentManagement from './components/admin/DocumentManagement';
+import StagiaireLayout from './components/stagiaire/StagiaireLayout';
+import ProfilePage from './components/stagiaire/ProfilePage';
+import StagePage from './components/stagiaire/StagePage';
+import DocumentPage from './components/stagiaire/DocumentPage';
+import FormateurDashboard from './components/FormateurDashboard';
 
 function App() {
   // Check if user is authenticated
@@ -43,21 +52,40 @@ function App() {
         {/* Protected routes for administrators */}
         <Route path="/admin/dashboard" element={
           <ProtectedRoute userType="administrateur">
-            <div>Admin Dashboard</div>
+            <AdminDashboard />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/users" element={
+          <ProtectedRoute userType="administrateur">
+            <UserManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/stages" element={
+          <ProtectedRoute userType="administrateur">
+            <StageManagement />
+          </ProtectedRoute>
+        } />
+        <Route path="/admin/documents" element={
+          <ProtectedRoute userType="administrateur">
+            <DocumentManagement />
           </ProtectedRoute>
         } />
         
         {/* Protected routes for students */}
-        <Route path="/etudiant/dashboard" element={
+        <Route path="/etudiant" element={
           <ProtectedRoute userType="stagiaire">
-            <div>Student Dashboard</div>
+            <StagiaireLayout />
           </ProtectedRoute>
-        } />
+        }>
+          <Route path="dashboard" element={<ProfilePage />} />
+          <Route path="stage" element={<StagePage />} />
+          <Route path="documents" element={<DocumentPage />} />
+        </Route>
         
         {/* Protected routes for instructors */}
         <Route path="/formateur/dashboard" element={
           <ProtectedRoute userType="formateur">
-            <div>Instructor Dashboard</div>
+            <FormateurDashboard />
           </ProtectedRoute>
         } />
         
