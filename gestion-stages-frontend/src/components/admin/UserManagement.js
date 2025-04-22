@@ -1,307 +1,203 @@
-import React, { useState } from 'react';
-import { Plus, Pencil, Trash2, Search, X, UserPlus, Mail, UserCheck } from 'lucide-react';
-import AdminLayout from './AdminLayout';
+import React, { useEffect, useState } from 'react';
+import axios from 'axios';
+import AdminNavigation from './AdminNavigation'; // Adjust the import path as needed
 
-function UserManagement() {
-  const [users, setUsers] = useState([
-    { id: 1, name: 'John Doe', email: 'john@example.com', role: 'Formateur', status: 'Actif' },
-    { id: 2, name: 'Jane Smith', email: 'jane@example.com', role: 'Stagiaire', status: 'Actif' },
-    // Ajouter plus d'utilisateurs pour la démonstration
-  ]);
-
-  const [showModal, setShowModal] = useState(false);
-  const [modalMode, setModalMode] = useState('add'); // 'add' ou 'edit'
-  const [selectedUser, setSelectedUser] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-
+const UserManagement = () => {
+  const [users, setUsers] = useState([]);
   const [formData, setFormData] = useState({
-    name: '',
+    role: '',
+    nom: '',
+    prenom: '',
     email: '',
-    role: 'Stagiaire',
-    password: '',
-    confirmPassword: ''
+    password: ''
   });
+  const [editMode, setEditMode] = useState(false);
+  const [editUserId, setEditUserId] = useState(null);
+  const [editUserRole, setEditUserRole] = useState(null);
 
-  const handleAddUser = () => {
-    setModalMode('add');
-    setFormData({
-      name: '',
-      email: '',
-      role: 'Stagiaire',
-      password: '',
-      confirmPassword: ''
-    });
-    setShowModal(true);
+  const token = localStorage.getItem('token');
+
+  const headers = {
+    Authorization: `Bearer ${token}`
   };
 
-  const handleEditUser = (user) => {
-    setModalMode('edit');
-    setSelectedUser(user);
-    setFormData({
-      name: user.name,
-      email: user.email,
-      role: user.role,
-      password: '',
-      confirmPassword: ''
-    });
-    setShowModal(true);
-  };
+  useEffect(() => {
+    fetchUsers();
+  }, []);
 
-  const handleDeleteUser = (userId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer cet utilisateur ?')) {
-      setUsers(users.filter(user => user.id !== userId));
+  const fetchUsers = async () => {
+    try {
+      const res = await axios.get('http://localhost:8000/api/admin/accounts', { headers });
+      setUsers(res.data);
+    } catch (error) {
+      console.error("Erreur lors du chargement des utilisateurs :", error);
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleChange = (e) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (modalMode === 'add') {
-      // Ajouter un nouvel utilisateur
-      const newUser = {
-        id: users.length + 1,
-        ...formData,
-        status: 'Actif'
-      };
-      setUsers([...users, newUser]);
-    } else {
-      // Modifier un utilisateur existant
-      setUsers(users.map(user =>
-        user.id === selectedUser.id
-          ? { ...user, name: formData.name, email: formData.email, role: formData.role }
-          : user
-      ));
+
+    try {
+      if (editMode) {
+        await axios.put(
+          `http://localhost:8000/api/admin/accounts/${editUserRole}/${editUserId}`,
+          formData,
+          { headers }
+        );
+        alert("Utilisateur modifié avec succès.");
+      } else {
+        await axios.post('http://localhost:8000/api/admin/accounts', formData, { headers });
+        alert("Utilisateur créé avec succès.");
+      }
+
+      fetchUsers();
+      resetForm();
+    } catch (error) {
+      alert("Erreur : " + (error.response?.data?.message || 'Une erreur est survenue'));
     }
-    setShowModal(false);
   };
 
-  const filteredUsers = users.filter(user =>
-    user.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.role.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const handleEdit = (user) => {
+    const [nom, ...rest] = user.name.split(' ');
+    const prenom = rest.join(' ');
+    setFormData({
+      role: user.role,
+      nom: nom || '',
+      prenom: prenom || '',
+      email: user.email,
+      password: ''
+    });
+    setEditUserId(user.id);
+    setEditUserRole(user.role);
+    setEditMode(true);
+  };
+
+  const handleDelete = async (user) => {
+    if (!window.confirm(`Supprimer ${user.name} ?`)) return;
+
+    try {
+      await axios.delete(
+        `http://localhost:8000/api/admin/accounts/${user.role}/${user.id}`,
+        { headers }
+      );
+      alert("Utilisateur supprimé avec succès.");
+      fetchUsers();
+    } catch (error) {
+      alert("Erreur lors de la suppression");
+    }
+  };
+
+  const resetForm = () => {
+    setFormData({
+      role: '',
+      nom: '',
+      prenom: '',
+      email: '',
+      password: ''
+    });
+    setEditMode(false);
+    setEditUserId(null);
+    setEditUserRole(null);
+  };
 
   return (
-    <AdminLayout>
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Gestion des Utilisateurs</h1>
-        <p className="text-gray-600 mt-1">Gérez les comptes des stagiaires, formateurs et administrateurs</p>
+    <div className="flex min-h-screen">
+      {/* Sidebar with AdminNavigation */}
+      <div className="w-64 bg-gray-800 text-white">
+        <AdminNavigation />
       </div>
 
-      <div className="bg-white rounded-xl shadow-md p-6 mb-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
-          <div className="bg-indigo-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-indigo-600 font-medium">Total Utilisateurs</p>
-                <h3 className="text-2xl font-bold text-indigo-900 mt-1">{users.length}</h3>
-              </div>
-              <UserCheck className="h-8 w-8 text-indigo-500" />
-            </div>
-          </div>
-          <div className="bg-green-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-green-600 font-medium">Stagiaires Actifs</p>
-                <h3 className="text-2xl font-bold text-green-900 mt-1">
-                  {users.filter(user => user.role === 'Stagiaire' && user.status === 'Actif').length}
-                </h3>
-              </div>
-              <UserPlus className="h-8 w-8 text-green-500" />
-            </div>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-lg">
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm text-blue-600 font-medium">Formateurs Actifs</p>
-                <h3 className="text-2xl font-bold text-blue-900 mt-1">
-                  {users.filter(user => user.role === 'Formateur' && user.status === 'Actif').length}
-                </h3>
-              </div>
-              <Mail className="h-8 w-8 text-blue-500" />
-            </div>
-          </div>
-        </div>
+      {/* Main content */}
+      <div className="flex-1 p-8">
+        <div className="max-w-5xl mx-auto">
+          <h2 className="text-2xl font-bold mb-6 text-center">Gestion des utilisateurs</h2>
 
-        <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-          <div className="relative flex-1">
-        <button
-          onClick={handleAddUser}
-          className="flex items-center space-x-2 bg-indigo-600 text-white px-4 py-2 rounded-lg hover:bg-indigo-700 transition-colors"
-        >
-          <Plus size={20} />
-          <span>Ajouter un utilisateur</span>
-        </button>
-          </div>
-          <div className="flex items-center space-x-2">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400" size={20} />
-          <input
-            type="text"
-            placeholder="Rechercher un utilisateur..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-            <button
-              onClick={handleAddUser}
-              className="flex items-center space-x-2 bg-green-600 text-white px-4 py-2 rounded-lg hover:bg-green-700 transition-colors"
-            >
-              <Plus size={20} />
-              <span>Ajouter un utilisateur</span>
-            </button>
-          </div>
-        </div>
+          <form onSubmit={handleSubmit} className="bg-white p-6 rounded-lg shadow-md mb-10 space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <input type="text" name="nom" placeholder="Nom" value={formData.nom} onChange={handleChange}
+                className="border border-gray-300 p-2 rounded w-full" required />
 
-      {/* Table des utilisateurs */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Nom</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Rôle</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredUsers.map((user) => (
-              <tr key={user.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{user.name}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{user.email}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-500">{user.role}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className="px-2 inline-flex text-xs leading-5 font-semibold rounded-full bg-green-100 text-green-800">
-                    {user.status}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <div className="flex space-x-2">
-                    <button
-                      onClick={() => handleEditUser(user)}
-                      className="text-indigo-600 hover:text-indigo-900"
-                    >
-                      <Pencil size={16} />
-                    </button>
-                    <button
-                      onClick={() => handleDeleteUser(user.id)}
-                      className="text-red-600 hover:text-red-900"
-                    >
-                      <Trash2 size={16} />
-                    </button>
-                  </div>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+              <input type="text" name="prenom" placeholder="Prénom" value={formData.prenom} onChange={handleChange}
+                className="border border-gray-300 p-2 rounded w-full" required />
 
-      {/* Modal d'ajout/modification d'utilisateur */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-96 shadow-lg rounded-lg bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">
-                {modalMode === 'add' ? 'Ajouter un utilisateur' : 'Modifier l\'utilisateur'}
-              </h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <X size={24} />
-              </button>
-            </div>
+              <input type="email" name="email" placeholder="Email" value={formData.email} onChange={handleChange}
+                className="border border-gray-300 p-2 rounded w-full" required />
 
-            <form onSubmit={handleSubmit} className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Nom</label>
-                <input
-                  type="text"
-                  required
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  value={formData.name}
-                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Email</label>
-                <input
-                  type="email"
-                  required
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  value={formData.email}
-                  onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                />
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700">Rôle</label>
-                <select
-                  className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                  value={formData.role}
-                  onChange={(e) => setFormData({ ...formData, role: e.target.value })}
-                >
-                  <option value="Stagiaire">Stagiaire</option>
-                  <option value="Formateur">Formateur</option>
-                  <option value="Administrateur">Administrateur</option>
-                </select>
-              </div>
-
-              {modalMode === 'add' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Mot de passe</label>
-                    <input
-                      type="password"
-                      required
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      value={formData.password}
-                      onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700">Confirmer le mot de passe</label>
-                    <input
-                      type="password"
-                      required
-                      className="mt-1 block w-full border border-gray-300 rounded-md shadow-sm py-2 px-3 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500"
-                      value={formData.confirmPassword}
-                      onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                    />
-                  </div>
-                </>
+              {!editMode && (
+                <input type="password" name="password" placeholder="Mot de passe" value={formData.password} onChange={handleChange}
+                  className="border border-gray-300 p-2 rounded w-full" required />
               )}
 
-              <div className="flex justify-end space-x-3 mt-6">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-sm font-medium text-gray-700 hover:bg-gray-50"
-                >
+              <select name="role" value={formData.role} onChange={handleChange}
+                className="border border-gray-300 p-2 rounded w-full" required disabled={editMode}>
+                <option value="">-- Rôle --</option>
+                <option value="stagiaire">Stagiaire</option>
+                <option value="formateur">Formateur</option>
+                <option value="administrateur">Administrateur</option>
+              </select>
+            </div>
+
+            <div className="flex gap-4 mt-4">
+              <button type="submit" className="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                {editMode ? 'Modifier' : 'Créer'}
+              </button>
+              {editMode && (
+                <button type="button" onClick={resetForm}
+                  className="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">
                   Annuler
                 </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                >
-                  {modalMode === 'add' ? 'Ajouter' : 'Modifier'}
-                </button>
-              </div>
-            </form>
+              )}
+            </div>
+          </form>
+
+          <h3 className="text-xl font-semibold mb-4">Liste des utilisateurs</h3>
+
+          <div className="overflow-x-auto">
+            <table className="min-w-full bg-white border border-gray-300 shadow-md rounded-md">
+              <thead>
+                <tr className="bg-gray-100 text-left">
+                  <th className="p-3 border-b">Nom</th>
+                  <th className="p-3 border-b">Email</th>
+                  <th className="p-3 border-b">Rôle</th>
+                  <th className="p-3 border-b">Créé le</th>
+                  <th className="p-3 border-b">Actions</th>
+                </tr>
+              </thead>
+              <tbody>
+                {users.map(u => (
+                  <tr key={`${u.role}-${u.id}`} className="hover:bg-gray-50">
+                    <td className="p-3 border-b">{u.name}</td>
+                    <td className="p-3 border-b">{u.email}</td>
+                    <td className="p-3 border-b capitalize">{u.role}</td>
+                    <td className="p-3 border-b">{u.created_at?.split('T')[0]}</td>
+                    <td className="p-3 border-b space-x-2">
+                      <button onClick={() => handleEdit(u)}
+                        className="bg-yellow-500 text-white px-3 py-1 rounded hover:bg-yellow-600">
+                        Modifier
+                      </button>
+                      <button onClick={() => handleDelete(u)}
+                        className="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700">
+                        Supprimer
+                      </button>
+                    </td>
+                  </tr>
+                ))}
+                {users.length === 0 && (
+                  <tr>
+                    <td colSpan="5" className="text-center p-4 text-gray-500">Aucun utilisateur trouvé</td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
         </div>
-      )}
+      </div>
     </div>
-    </AdminLayout>
   );
-}
+};
 
 export default UserManagement;

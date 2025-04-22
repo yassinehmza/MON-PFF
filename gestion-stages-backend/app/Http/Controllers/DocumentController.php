@@ -34,7 +34,7 @@ class DocumentController extends Controller
     public function store(Request $request)
     {
         $validator = Validator::make($request->all(), [
-            'stage_id' => 'required|exists:stages,id',
+            'stage_id' => 'nullable|integer|exists:stages,id', // nullable for admin
             'type' => 'required|string|max:255',
             'file' => 'required|file|max:10240', // 10MB max
         ]);
@@ -48,7 +48,7 @@ class DocumentController extends Controller
         $file->storeAs('documents', $fileName);
 
         $document = Document::create([
-            'stage_id' => $request->stage_id,
+            'stage_id' => $request->filled('stage_id') ? $request->stage_id : null,
             'type' => $request->type,
             'nom_fichier' => $fileName,
             'date_depot' => now(),

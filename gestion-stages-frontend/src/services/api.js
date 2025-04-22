@@ -11,6 +11,15 @@ const api = axios.create({
   withCredentials: true // Important for cookies/CSRF to work properly
 });
 
+// Fetch all entreprises
+export const fetchEntreprises = () => api.get('/entreprises');
+
+// Fetch all formateurs (requires backend endpoint, see PHP changes)
+export const fetchFormateurs = () => api.get('/formateurs');
+
+// Submit a new stage (for authenticated stagiaire)
+export const submitStage = (formData) => api.post('/etudiant/stages', formData);
+
 // Add a request interceptor to add the auth token to requests
 api.interceptors.request.use(
   (config) => {

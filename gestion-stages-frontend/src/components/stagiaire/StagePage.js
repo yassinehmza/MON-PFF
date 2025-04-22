@@ -1,45 +1,72 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
+import api, { fetchFormateurs, fetchEntreprises, submitStage } from '../../services/api';
 import { Plus, Edit2, Trash2, Check, X, Calendar, Building2, User2, FileText, Send } from 'lucide-react';
 
 function StagePage() {
-  const [stages, setStages] = useState([
-    {
-      id: 1,
-      entreprise: 'Entreprise A',
-      dateDebut: '2024-01-01',
-      dateFin: '2024-02-28',
-      tuteur: 'Jean Dupont',
-      missions: 'Développement web et mobile',
-      status: 'brouillon'
-    }
-  ]);
+  const [stages, setStages] = useState([]);
+
+  useEffect(() => {
+    const fetchStages = async () => {
+      try {
+        const response = await api.get('/etudiant/stages');
+        setStages(response.data.stages || []);
+      } catch (error) {}
+    };
+    fetchStages();
+
+    // Fetch formateurs and entreprises for dropdowns
+    const fetchDropdowns = async () => {
+      try {
+        const [formateursRes, entreprisesRes] = await Promise.all([
+          fetchFormateurs(),
+          fetchEntreprises()
+        ]);
+        setFormateurs(formateursRes.data.formateurs || []);
+        // Only keep entreprises with a valid id
+        const validEntreprises = (entreprisesRes.data.entreprises || []).filter(ent => ent.id && ent.id !== 0 && ent.id !== '0');
+        setEntreprises(validEntreprises);
+      } catch (error) {
+        // If entreprises endpoint 404s, ignore and set empty
+        setEntreprises([]);
+      }
+    };
+    fetchDropdowns();
+  }, []);
 
   const [showForm, setShowForm] = useState(false);
   const [editingStage, setEditingStage] = useState(null);
   const [formData, setFormData] = useState({
-    entreprise: '',
-    dateDebut: '',
-    dateFin: '',
-    tuteur: '',
-    missions: ''
+    id_formateur: '',
+    id_entreprise: '',
+    date_debut: '',
+    date_fin: '',
+    description: '',
+    evaluation: '',
+    encadrant_entreprise: '',
+    contact_encadrant: ''
   });
+
+  const [formateurs, setFormateurs] = useState([]);
+  const [entreprises, setEntreprises] = useState([]);
 
   const [errors, setErrors] = useState({});
 
   const validateForm = () => {
     const newErrors = {};
-    if (!formData.entreprise) newErrors.entreprise = 'Le nom de l\'entreprise est requis';
-    if (!formData.dateDebut) newErrors.dateDebut = 'La date de début est requise';
-    if (!formData.dateFin) newErrors.dateFin = 'La date de fin est requise';
-    if (!formData.tuteur) newErrors.tuteur = 'Le nom du tuteur est requis';
-    if (!formData.missions) newErrors.missions = 'La description des missions est requise';
-    if (formData.dateDebut && formData.dateFin && new Date(formData.dateDebut) > new Date(formData.dateFin)) {
-      newErrors.dateFin = 'La date de fin doit être postérieure à la date de début';
+    if (!formData.id_formateur) newErrors.id_formateur = 'Le formateur est requis';
+    if (!formData.id_entreprise) newErrors.id_entreprise = 'L\'entreprise est requise';
+    if (!formData.date_debut) newErrors.date_debut = 'La date de début est requise';
+    if (!formData.date_fin) newErrors.date_fin = 'La date de fin est requise';
+    if (!formData.description) newErrors.description = 'La description est requise';
+    if (!formData.encadrant_entreprise) newErrors.encadrant_entreprise = 'Le nom de l\'encadrant est requis';
+    if (!formData.contact_encadrant) newErrors.contact_encadrant = 'Le contact de l\'encadrant est requis';
+    if (formData.date_debut && formData.date_fin && new Date(formData.date_debut) > new Date(formData.date_fin)) {
+      newErrors.date_fin = 'La date de fin doit être postérieure à la date de début';
     }
     return newErrors;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     const formErrors = validateForm();
     if (Object.keys(formErrors).length > 0) {
@@ -47,35 +74,47 @@ function StagePage() {
       return;
     }
 
-    if (editingStage) {
-      setStages(stages.map(stage =>
-        stage.id === editingStage.id
-          ? { ...formData, id: stage.id, status: stage.status }
-          : stage
-      ));
-    } else {
-      setStages([
-        ...stages,
-        {
-          ...formData,
-          id: Date.now(),
-          status: 'brouillon'
-        }
-      ]);
+    try {
+      let response;
+      if (editingStage) {
+        response = await api.put(`/etudiant/stages/${editingStage.id}`, formData);
+        setStages(stages.map(stage =>
+          stage.id === editingStage.id ? response.data.stage : stage
+        ));
+      } else {
+        response = await submitStage(formData);
+        setStages([...stages, response.data.stage]);
+      }
+      setShowForm(false);
+      setEditingStage(null);
+      setFormData({
+        id_formateur: '',
+        id_entreprise: '',
+        date_debut: '',
+        date_fin: '',
+        description: '',
+        evaluation: '',
+        encadrant_entreprise: '',
+        contact_encadrant: ''
+      });
+      setErrors({});
+    } catch (error) {
+      setErrors(error.response?.data?.errors || { submit: 'Erreur lors de la sauvegarde du stage' });
     }
-
-    setShowForm(false);
-    setEditingStage(null);
-    setFormData({
-      entreprise: '',
-      dateDebut: '',
-      dateFin: '',
-      tuteur: '',
-      missions: ''
-    });
   };
 
-  const handleEdit = (stage) => {
+  const handleDelete = async (id) => {
+  if (window.confirm('Êtes-vous sûr de vouloir supprimer ce stage ?')) {
+    try {
+      await api.delete(`/etudiant/stages/${id}`);
+      setStages(stages.filter(stage => stage.id !== id));
+    } catch (error) {
+      // Optionally handle error
+    }
+  }
+};
+
+const handleEdit = (stage) => {
     if (stage.status === 'brouillon') {
       setEditingStage(stage);
       setFormData({
@@ -86,12 +125,6 @@ function StagePage() {
         missions: stage.missions
       });
       setShowForm(true);
-    }
-  };
-
-  const handleDelete = (stageId) => {
-    if (window.confirm('Êtes-vous sûr de vouloir supprimer ce stage ?')) {
-      setStages(stages.filter(stage => stage.id !== stageId));
     }
   };
 
@@ -153,45 +186,53 @@ function StagePage() {
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="entreprise" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="id_entreprise" className="block text-sm font-medium text-gray-700">
                     Entreprise
                   </label>
                   <div className="mt-1 relative rounded-lg shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <Building2 className="h-5 w-5 text-gray-400" />
                     </div>
-                    <input
-                      type="text"
-                      id="entreprise"
-                      value={formData.entreprise}
-                      onChange={(e) => setFormData({ ...formData, entreprise: e.target.value })}
-                      className={`block w-full pl-10 pr-3 py-2 border ${errors.entreprise ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
-                    />
+                    <select
+                      id="id_entreprise"
+                      value={formData.id_entreprise}
+                      onChange={e => setFormData({ ...formData, id_entreprise: e.target.value })}
+                      className={`block w-full pl-10 pr-3 py-2 border ${errors.id_entreprise ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                    >
+                      <option value="">Sélectionner une entreprise</option>
+                      {entreprises.map(ent => (
+                        <option key={ent.id} value={ent.id}>{ent.nom}</option>
+                      ))}
+                    </select>
                   </div>
-                  {errors.entreprise && <p className="mt-1 text-sm text-red-600">{errors.entreprise}</p>}
+                  {errors.id_entreprise && <p className="mt-1 text-sm text-red-600">{errors.id_entreprise}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="tuteur" className="block text-sm font-medium text-gray-700">
-                    Tuteur
+                  <label htmlFor="id_formateur" className="block text-sm font-medium text-gray-700">
+                    Formateur
                   </label>
                   <div className="mt-1 relative rounded-lg shadow-sm">
                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                       <User2 className="h-5 w-5 text-gray-400" />
                     </div>
-                    <input
-                      type="text"
-                      id="tuteur"
-                      value={formData.tuteur}
-                      onChange={(e) => setFormData({ ...formData, tuteur: e.target.value })}
-                      className={`block w-full pl-10 pr-3 py-2 border ${errors.tuteur ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
-                    />
+                    <select
+                      id="id_formateur"
+                      value={formData.id_formateur}
+                      onChange={e => setFormData({ ...formData, id_formateur: e.target.value })}
+                      className={`block w-full pl-10 pr-3 py-2 border ${errors.id_formateur ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                    >
+                      <option value="">Sélectionner un formateur</option>
+                      {formateurs.map(f => (
+                        <option key={f.id} value={f.id}>{f.name}</option>
+                      ))}
+                    </select>
                   </div>
-                  {errors.tuteur && <p className="mt-1 text-sm text-red-600">{errors.tuteur}</p>}
+                  {errors.id_formateur && <p className="mt-1 text-sm text-red-600">{errors.id_formateur}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="dateDebut" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="date_debut" className="block text-sm font-medium text-gray-700">
                     Date de début
                   </label>
                   <div className="mt-1 relative rounded-lg shadow-sm">
@@ -200,17 +241,17 @@ function StagePage() {
                     </div>
                     <input
                       type="date"
-                      id="dateDebut"
-                      value={formData.dateDebut}
-                      onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
-                      className={`block w-full pl-10 pr-3 py-2 border ${errors.dateDebut ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                      id="date_debut"
+                      value={formData.date_debut}
+                      onChange={e => setFormData({ ...formData, date_debut: e.target.value })}
+                      className={`block w-full pl-10 pr-3 py-2 border ${errors.date_debut ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
                     />
                   </div>
-                  {errors.dateDebut && <p className="mt-1 text-sm text-red-600">{errors.dateDebut}</p>}
+                  {errors.date_debut && <p className="mt-1 text-sm text-red-600">{errors.date_debut}</p>}
                 </div>
 
                 <div>
-                  <label htmlFor="dateFin" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="date_fin" className="block text-sm font-medium text-gray-700">
                     Date de fin
                   </label>
                   <div className="mt-1 relative rounded-lg shadow-sm">
@@ -219,33 +260,75 @@ function StagePage() {
                     </div>
                     <input
                       type="date"
-                      id="dateFin"
-                      value={formData.dateFin}
-                      onChange={(e) => setFormData({ ...formData, dateFin: e.target.value })}
-                      className={`block w-full pl-10 pr-3 py-2 border ${errors.dateFin ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                      id="date_fin"
+                      value={formData.date_fin}
+                      onChange={e => setFormData({ ...formData, date_fin: e.target.value })}
+                      className={`block w-full pl-10 pr-3 py-2 border ${errors.date_fin ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
                     />
                   </div>
-                  {errors.dateFin && <p className="mt-1 text-sm text-red-600">{errors.dateFin}</p>}
+                  {errors.date_fin && <p className="mt-1 text-sm text-red-600">{errors.date_fin}</p>}
                 </div>
               </div>
 
               <div>
-                <label htmlFor="missions" className="block text-sm font-medium text-gray-700">
-                  Missions
+                <label htmlFor="description" className="block text-sm font-medium text-gray-700">
+                  Description
                 </label>
                 <div className="mt-1 relative rounded-lg shadow-sm">
                   <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                     <FileText className="h-5 w-5 text-gray-400" />
                   </div>
                   <textarea
-                    id="missions"
+                    id="description"
                     rows="4"
-                    value={formData.missions}
-                    onChange={(e) => setFormData({ ...formData, missions: e.target.value })}
-                    className={`block w-full pl-10 pr-3 py-2 border ${errors.missions ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                    value={formData.description}
+                    onChange={e => setFormData({ ...formData, description: e.target.value })}
+                    className={`block w-full pl-10 pr-3 py-2 border ${errors.description ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
                   />
                 </div>
-                {errors.missions && <p className="mt-1 text-sm text-red-600">{errors.missions}</p>}
+                {errors.description && <p className="mt-1 text-sm text-red-600">{errors.description}</p>}
+              </div>
+
+              <div className="grid grid-cols-1 gap-6 sm:grid-cols-2">
+                <div>
+                  <label htmlFor="encadrant_entreprise" className="block text-sm font-medium text-gray-700">
+                    Encadrant entreprise
+                  </label>
+                  <input
+                    type="text"
+                    id="encadrant_entreprise"
+                    value={formData.encadrant_entreprise}
+                    onChange={e => setFormData({ ...formData, encadrant_entreprise: e.target.value })}
+                    className={`block w-full pr-3 py-2 border ${errors.encadrant_entreprise ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                  />
+                  {errors.encadrant_entreprise && <p className="mt-1 text-sm text-red-600">{errors.encadrant_entreprise}</p>}
+                </div>
+                <div>
+                  <label htmlFor="contact_encadrant" className="block text-sm font-medium text-gray-700">
+                    Contact encadrant
+                  </label>
+                  <input
+                    type="text"
+                    id="contact_encadrant"
+                    value={formData.contact_encadrant}
+                    onChange={e => setFormData({ ...formData, contact_encadrant: e.target.value })}
+                    className={`block w-full pr-3 py-2 border ${errors.contact_encadrant ? 'border-red-300' : 'border-gray-300'} rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500`}
+                  />
+                  {errors.contact_encadrant && <p className="mt-1 text-sm text-red-600">{errors.contact_encadrant}</p>}
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="evaluation" className="block text-sm font-medium text-gray-700">
+                  Évaluation (optionnel)
+                </label>
+                <input
+                  type="text"
+                  id="evaluation"
+                  value={formData.evaluation}
+                  onChange={e => setFormData({ ...formData, evaluation: e.target.value })}
+                  className="block w-full pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-1 focus:ring-indigo-500 focus:border-indigo-500"
+                />
               </div>
 
               <div className="flex justify-end space-x-3">

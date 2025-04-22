@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { User, Lock, Save } from 'lucide-react';
+import api from '../../services/api';
 
 function ProfilePage() {
   const [personalInfo, setPersonalInfo] = useState({
@@ -45,6 +46,22 @@ function ProfilePage() {
     return newErrors;
   };
 
+  useEffect(() => {
+    const fetchProfile = async () => {
+      try {
+        const response = await api.post('/user');
+        setPersonalInfo({
+          nom: response.data.nom || '',
+          prenom: response.data.prenom || '',
+          email: response.data.email || ''
+        });
+      } catch (error) {
+        setErrors({ fetch: 'Erreur lors du chargement du profil' });
+      }
+    };
+    fetchProfile();
+  }, []);
+
   const handlePersonalInfoSubmit = async (e) => {
     e.preventDefault();
     const formErrors = validatePersonalInfo();
@@ -54,11 +71,11 @@ function ProfilePage() {
     }
 
     try {
-      // Appel API pour mettre à jour les informations personnelles
+      await api.put('/etudiant/profile', personalInfo);
       setSuccessMessage('Informations personnelles mises à jour avec succès');
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      setErrors({ submit: 'Erreur lors de la mise à jour des informations' });
+      setErrors(error.response?.data?.errors || { submit: 'Erreur lors de la mise à jour des informations' });
     }
   };
 
@@ -71,12 +88,12 @@ function ProfilePage() {
     }
 
     try {
-      // Appel API pour changer le mot de passe
-      setSuccessMessage('Mot de passe modifié avec succès');
+      await api.put('/etudiant/password', passwordInfo);
+      setSuccessMessage('Mot de passe mis à jour avec succès');
       setPasswordInfo({ currentPassword: '', newPassword: '', confirmPassword: '' });
       setTimeout(() => setSuccessMessage(''), 3000);
     } catch (error) {
-      setErrors({ submit: 'Erreur lors du changement de mot de passe' });
+      setErrors(error.response?.data?.errors || { submit: 'Erreur lors de la mise à jour du mot de passe' });
     }
   };
 

@@ -1,324 +1,327 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Search, Edit2, Trash2, FileText, X, CheckCircle, XCircle } from 'lucide-react';
+import api from '../../services/api';
+import AdminNavigation from './AdminNavigation'; // Adjust the import path as needed
 
-function StageManagement() {
-  const [stages, setStages] = useState([
-    {
-      id: 1,
-      titre: 'Stage développement web',
-      stagiaire: 'Jean Dupont',
-      formateur: 'Marie Martin',
-      dateDebut: '2024-01-15',
-      dateFin: '2024-06-15',
-      status: 'en_cours',
-      entreprise: 'TechCorp',
-      description: 'Stage de développement web full-stack'
-    },
-    // Données de test
-  ]);
-
-  const [searchTerm, setSearchTerm] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [selectedStage, setSelectedStage] = useState(null);
+const StageManagement = () => {
+  const [stages, setStages] = useState([]);
   const [formData, setFormData] = useState({
     titre: '',
-    stagiaire: '',
-    formateur: '',
-    dateDebut: '',
-    dateFin: '',
-    entreprise: '',
-    description: ''
+    id_stagiaire: '',
+    id_formateur: '',
+    id_entreprise: '',
+    date_debut: '',
+    date_fin: '',
+    description: '',
+    status: 'en_attente',
+    encadrant_entreprise: '',
+    contact_encadrant: ''
   });
+  const [selectedStage, setSelectedStage] = useState(null);
+  const [showModal, setShowModal] = useState(false);
 
-  const handleSearch = (e) => {
-    setSearchTerm(e.target.value);
-  };
+  // Fetch stages on component load
+  useEffect(() => {
+    const fetchStages = async () => {
+      try {
+        const response = await api.get('/stages');
+        const data = response.data;
+        if (Array.isArray(data)) {
+          setStages(data);
+        } else {
+          setStages([]);
+          console.error("Error fetching stages:", data.message || data);
+        }
+      } catch (error) {
+        setStages([]);
+        console.error("Error fetching stages:", error.response?.data?.message || error.message || error);
+      }
+    };
 
-  const filteredStages = stages.filter(stage =>
-    stage.titre.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stage.stagiaire.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    stage.entreprise.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+    fetchStages();
+  }, []);
 
-  const handleAddStage = () => {
-    setSelectedStage(null);
+  // Handle form field change
+  const handleChange = (e) => {
     setFormData({
-      titre: '',
-      stagiaire: '',
-      formateur: '',
-      dateDebut: '',
-      dateFin: '',
-      entreprise: '',
-      description: ''
+      ...formData,
+      [e.target.name]: e.target.value,
     });
-    setShowModal(true);
   };
 
+  // Handle form submission
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+
+    try {
+      const method = selectedStage ? 'PUT' : 'POST';
+      const url = selectedStage
+        ? `/stages/${selectedStage.id}`
+        : '/stages';
+
+      console.log('Submitting formData:', formData);
+      let response;
+      if (method === 'PUT') {
+        response = await api.put(url, formData);
+      } else {
+        response = await api.post(url, formData);
+      }
+      const data = response.data;
+      // Success: update the UI
+      if (selectedStage) {
+        setStages(stages.map(stage => (stage.id === data.id ? data : stage)));
+      } else {
+        setStages([...stages, data]);
+      }
+      setShowModal(false);
+    } catch (error) {
+      console.error("Error submitting stage:", error.response?.data?.message || error.message || error);
+    }
+  };
+
+  // Handle edit stage
   const handleEditStage = (stage) => {
     setSelectedStage(stage);
     setFormData({
-      titre: stage.titre,
-      stagiaire: stage.stagiaire,
-      formateur: stage.formateur,
-      dateDebut: stage.dateDebut,
-      dateFin: stage.dateFin,
-      entreprise: stage.entreprise,
-      description: stage.description
+      titre: stage.titre || '',
+      id_stagiaire: stage.id_stagiaire || '',
+      id_formateur: stage.id_formateur || '',
+      id_entreprise: stage.id_entreprise || '',
+      date_debut: stage.date_debut || '',
+      date_fin: stage.date_fin || '',
+      description: stage.description || '',
+      status: stage.status || 'en_attente',
+      encadrant_entreprise: stage.encadrant_entreprise || '',
+      contact_encadrant: stage.contact_encadrant || ''
     });
     setShowModal(true);
   };
 
-  const handleDeleteStage = (stageId) => {
+  // Handle delete stage
+  const handleDeleteStage = async (stageId) => {
     if (window.confirm('Êtes-vous sûr de vouloir supprimer ce stage ?')) {
-      setStages(stages.filter(stage => stage.id !== stageId));
-    }
-  };
-
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (selectedStage) {
-      // Mise à jour d'un stage existant
-      setStages(stages.map(stage =>
-        stage.id === selectedStage.id
-          ? { ...stage, ...formData }
-          : stage
-      ));
-    } else {
-      // Ajout d'un nouveau stage
-      const newStage = {
-        id: stages.length + 1,
-        ...formData,
-        status: 'en_cours'
-      };
-      setStages([...stages, newStage]);
-    }
-    setShowModal(false);
-  };
-
-  const getStatusBadgeClass = (status) => {
-    switch (status) {
-      case 'en_cours':
-        return 'bg-green-100 text-green-800';
-      case 'termine':
-        return 'bg-blue-100 text-blue-800';
-      case 'annule':
-        return 'bg-red-100 text-red-800';
-      default:
-        return 'bg-gray-100 text-gray-800';
+      try {
+        const response = await api.delete(`/stages/${stageId}`);
+        if (response.status === 200 || response.status === 204) {
+          setStages(stages.filter(stage => stage.id !== stageId));
+        } else {
+          console.error('Failed to delete stage');
+        }
+      } catch (error) {
+        console.error('Error deleting stage:', error.response?.data?.message || error.message || error);
+      }
     }
   };
 
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-2xl font-bold text-gray-800">Gestion des Stages</h1>
-        <button
-          onClick={handleAddStage}
-          className="flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
-        >
-          <Plus className="h-5 w-5 mr-2" />
-          Ajouter un stage
-        </button>
+    <div className="flex min-h-screen">
+      {/* Sidebar with AdminNavigation */}
+      <div className="w-64 bg-gray-800 text-white">
+        <AdminNavigation />
       </div>
 
-      {/* Barre de recherche */}
-      <div className="mb-6">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-5 w-5" />
-          <input
-            type="text"
-            placeholder="Rechercher un stage..."
-            className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500"
-            value={searchTerm}
-            onChange={handleSearch}
-          />
-        </div>
-      </div>
+      {/* Main content */}
+      <div className="flex-1 p-8">
+        <div className="container mx-auto">
+          <h1 className="text-2xl font-bold mb-4">Gestion des stages</h1>
+          <button
+            onClick={() => {
+              console.log('Adding a new stage');
+              setSelectedStage(null);
+              setFormData({
+                titre: '',
+                id_stagiaire: '',
+                id_formateur: '',
+                id_entreprise: '',
+                date_debut: '',
+                date_fin: '',
+                description: '',
+                status: 'en_attente',
+                encadrant_entreprise: '',
+                contact_encadrant: ''
+              });
+              setShowModal(true);
+            }}
+            className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 mb-4"
+          >
+            Ajouter un stage
+          </button>
 
-      {/* Table des stages */}
-      <div className="bg-white rounded-xl shadow-md overflow-hidden">
-        <table className="min-w-full divide-y divide-gray-200">
-          <thead className="bg-gray-50">
-            <tr>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stage</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Stagiaire</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Entreprise</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Période</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Statut</th>
-              <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
-            </tr>
-          </thead>
-          <tbody className="bg-white divide-y divide-gray-200">
-            {filteredStages.map((stage) => (
-              <tr key={stage.id}>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm font-medium text-gray-900">{stage.titre}</div>
-                  <div className="text-sm text-gray-500">{stage.description}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{stage.stagiaire}</div>
-                  <div className="text-sm text-gray-500">Encadré par: {stage.formateur}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">{stage.entreprise}</div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <div className="text-sm text-gray-900">
-                    {new Date(stage.dateDebut).toLocaleDateString()} - {new Date(stage.dateFin).toLocaleDateString()}
-                  </div>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap">
-                  <span className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(stage.status)}`}>
-                    {stage.status === 'en_cours' ? 'En cours' : stage.status === 'termine' ? 'Terminé' : 'Annulé'}
-                  </span>
-                </td>
-                <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                  <button
-                    onClick={() => handleEditStage(stage)}
-                    className="text-indigo-600 hover:text-indigo-900 mr-4"
-                  >
-                    <Edit2 className="h-5 w-5" />
-                  </button>
-                  <button
-                    onClick={() => handleDeleteStage(stage.id)}
-                    className="text-red-600 hover:text-red-900"
-                  >
-                    <Trash2 className="h-5 w-5" />
-                  </button>
-                </td>
+          <table className="min-w-full table-auto border-collapse border border-gray-200">
+            <thead>
+              <tr className="bg-gray-100">
+                <th className="px-4 py-2 border">Titre</th>
+                <th className="px-4 py-2 border">Date de début</th>
+                <th className="px-4 py-2 border">Date de fin</th>
+                <th className="px-4 py-2 border">Status</th>
+                <th className="px-4 py-2 border">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
+            </thead>
+            <tbody>
+              {stages.map(stage => (
+                <tr key={stage.id} className="odd:bg-gray-50">
+                  <td className="px-4 py-2 border">{stage.titre}</td>
+                  <td className="px-4 py-2 border">{stage.date_debut}</td>
+                  <td className="px-4 py-2 border">{stage.date_fin}</td>
+                  <td className="px-4 py-2 border">{stage.status}</td>
+                  <td className="px-4 py-2 border">
+                    <button
+                      onClick={() => handleEditStage(stage)}
+                      className="bg-yellow-500 text-white py-1 px-3 rounded mr-2 hover:bg-yellow-600"
+                    >
+                      Editer
+                    </button>
+                    <button
+                      onClick={() => handleDeleteStage(stage.id)}
+                      className="bg-red-500 text-white py-1 px-3 rounded hover:bg-red-600"
+                    >
+                      Supprimer
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-      {/* Modal d'ajout/modification de stage */}
-      {showModal && (
-        <div className="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50">
-          <div className="relative top-20 mx-auto p-5 border w-[600px] shadow-lg rounded-lg bg-white">
-            <div className="flex justify-between items-center mb-4">
-              <h3 className="text-xl font-semibold text-gray-900">
-                {selectedStage ? 'Modifier le stage' : 'Ajouter un stage'}
-              </h3>
-              <button
-                onClick={() => setShowModal(false)}
-                className="text-gray-400 hover:text-gray-500"
-              >
-                <X className="h-6 w-6" />
-              </button>
+          {/* Modal to add/edit stage */}
+          {showModal && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center z-50">
+              <div className="bg-white p-6 rounded shadow-lg w-full max-w-2xl">
+                <h2 className="text-xl font-semibold mb-4">{selectedStage ? 'Modifier le stage' : 'Ajouter un stage'}</h2>
+                <form onSubmit={handleSubmit}>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Titre</label>
+                      <input
+                        type="text"
+                        name="titre"
+                        value={formData.titre}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                        required
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Stagiaire ID</label>
+                      <input
+                        type="number"
+                        name="id_stagiaire"
+                        value={formData.id_stagiaire}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                        required
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Formateur ID</label>
+                      <input
+                        type="number"
+                        name="id_formateur"
+                        value={formData.id_formateur}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                        required
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Entreprise ID</label>
+                      <input
+                        type="number"
+                        name="id_entreprise"
+                        value={formData.id_entreprise}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                        required
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Date de début</label>
+                      <input
+                        type="date"
+                        name="date_debut"
+                        value={formData.date_debut}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                        required
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Date de fin</label>
+                      <input
+                        type="date"
+                        name="date_fin"
+                        value={formData.date_fin}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                        required
+                      />
+                    </div>
+                    <div className="mb-4 md:col-span-2">
+                      <label className="block font-medium mb-2">Description</label>
+                      <textarea
+                        name="description"
+                        value={formData.description}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                        rows="3"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Status</label>
+                      <select
+                        name="status"
+                        value={formData.status}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                      >
+                        <option value="en_attente">En attente</option>
+                        <option value="en_cours">En cours</option>
+                        <option value="termine">Terminé</option>
+                      </select>
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Encadrant entreprise</label>
+                      <input
+                        type="text"
+                        name="encadrant_entreprise"
+                        value={formData.encadrant_entreprise}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                      />
+                    </div>
+                    <div className="mb-4">
+                      <label className="block font-medium mb-2">Contact encadrant</label>
+                      <input
+                        type="text"
+                        name="contact_encadrant"
+                        value={formData.contact_encadrant}
+                        onChange={handleChange}
+                        className="w-full p-2 border border-gray-300 rounded"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex justify-end mt-4">
+                    <button
+                      type="submit"
+                      className="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+                    >
+                      {selectedStage ? 'Mettre à jour' : 'Ajouter'}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setShowModal(false)}
+                      className="bg-gray-300 text-black py-2 px-4 rounded ml-2 hover:bg-gray-400"
+                    >
+                      Annuler
+                    </button>
+                  </div>
+                </form>
+              </div>
             </div>
-            <form onSubmit={handleSubmit} className="grid grid-cols-2 gap-4">
-              <div className="col-span-2">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="titre">
-                  Titre du stage
-                </label>
-                <input
-                  type="text"
-                  id="titre"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={formData.titre}
-                  onChange={(e) => setFormData({ ...formData, titre: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="stagiaire">
-                  Stagiaire
-                </label>
-                <input
-                  type="text"
-                  id="stagiaire"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={formData.stagiaire}
-                  onChange={(e) => setFormData({ ...formData, stagiaire: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="formateur">
-                  Formateur
-                </label>
-                <input
-                  type="text"
-                  id="formateur"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={formData.formateur}
-                  onChange={(e) => setFormData({ ...formData, formateur: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="dateDebut">
-                  Date de début
-                </label>
-                <input
-                  type="date"
-                  id="dateDebut"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={formData.dateDebut}
-                  onChange={(e) => setFormData({ ...formData, dateDebut: e.target.value })}
-                  required
-                />
-              </div>
-              <div>
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="dateFin">
-                  Date de fin
-                </label>
-                <input
-                  type="date"
-                  id="dateFin"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={formData.dateFin}
-                  onChange={(e) => setFormData({ ...formData, dateFin: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="entreprise">
-                  Entreprise
-                </label>
-                <input
-                  type="text"
-                  id="entreprise"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
-                  value={formData.entreprise}
-                  onChange={(e) => setFormData({ ...formData, entreprise: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="col-span-2">
-                <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="description">
-                  Description
-                </label>
-                <textarea
-                  id="description"
-                  className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline h-32"
-                  value={formData.description}
-                  onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                  required
-                />
-              </div>
-              <div className="col-span-2 flex justify-end">
-                <button
-                  type="button"
-                  onClick={() => setShowModal(false)}
-                  className="mr-2 px-4 py-2 text-gray-500 hover:text-gray-700"
-                >
-                  Annuler
-                </button>
-                <button
-                  type="submit"
-                  className="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700"
-                >
-                  {selectedStage ? 'Modifier' : 'Ajouter'}
-                </button>
-              </div>
-            </form>
-          </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
-}
+};
 
 export default StageManagement;
