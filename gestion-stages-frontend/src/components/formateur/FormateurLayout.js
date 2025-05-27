@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
-import { Outlet } from 'react-router-dom';
-import { Users, FileText, Bell, Calendar, Clock, ChevronRight, CheckCircle, PieChart, BarChart as BarChartIcon } from 'lucide-react';
+import { Outlet, Link, useLocation } from 'react-router-dom';
+import { Users, FileText, Bell, Calendar, Clock, ChevronRight, CheckCircle, PieChart, BarChart as BarChartIcon, Home, ClipboardList, Settings, LogOut } from 'lucide-react';
 import { Line, Pie, Bar } from 'react-chartjs-2';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -103,12 +104,62 @@ function FormateurLayout() {
     const timer = setTimeout(() => {
       setShowNotification(true);
     }, 1000);
-    return () => clearTimeout(timer);
+
+    // Simuler la mise à jour des données
+    const updateData = () => {
+      setStatsData(prevStats => ({
+        ...prevStats,
+        stagiaires: prevStats.stagiaires + 1,
+        documentsEnAttente: Math.max(0, prevStats.documentsEnAttente - 1)
+      }));
+    };
+
+    const dataUpdateInterval = setInterval(updateData, 5000);
+
+    return () => {
+      clearTimeout(timer);
+      clearInterval(dataUpdateInterval);
+    };
   }, []);
 
+  const location = useLocation();
+
+  const menuItems = [
+    { path: '/formateur', icon: Home, label: 'Tableau de bord' },
+    { path: '/formateur/stagiaires', icon: Users, label: 'Stagiaires' },
+    { path: '/formateur/rapports', icon: ClipboardList, label: 'Rapports' },
+    { path: '/formateur/settings', icon: Settings, label: 'Paramètres' }
+  ];
+
   return (
-    <div className="min-h-screen bg-gray-100">
-      <main className="pl-64">
+    <div className="min-h-screen bg-gray-100 flex">
+      {/* Sidebar */}
+      <aside className="fixed left-0 top-0 h-full w-64 bg-white shadow-lg z-30">
+        <div className="p-6">
+          <h2 className="text-2xl font-bold text-indigo-600">Mon PFF</h2>
+        </div>
+        <nav className="mt-6">
+          {menuItems.map((item) => (
+            <Link
+              key={item.path}
+              to={item.path}
+              className={`flex items-center px-6 py-3 text-gray-700 hover:bg-indigo-50 hover:text-indigo-600 transition-all duration-200 ${location.pathname === item.path ? 'bg-indigo-50 text-indigo-600 border-r-4 border-indigo-600' : ''}`}
+            >
+              <item.icon className="h-5 w-5 mr-3" />
+              <span className="font-medium">{item.label}</span>
+            </Link>
+          ))}
+          <button
+            className="w-full flex items-center px-6 py-3 text-red-600 hover:bg-red-50 transition-all duration-200 mt-auto"
+            onClick={() => console.log('Déconnexion')}
+          >
+            <LogOut className="h-5 w-5 mr-3" />
+            <span className="font-medium">Déconnexion</span>
+          </button>
+        </nav>
+      </aside>
+
+      <main className="flex-1 pl-64">
         <div className="bg-white shadow">
           <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
             <h1 className="text-3xl font-bold text-gray-900">Tableau de Bord Formateur</h1>
@@ -117,7 +168,13 @@ function FormateurLayout() {
         <div className="max-w-7xl mx-auto py-6 px-4 sm:px-6 lg:px-8">
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-4 mb-8">
             {showNotification && (
-              <div className="fixed top-4 right-4 bg-white p-4 rounded-lg shadow-lg z-50 transform transition-transform duration-500 ease-in-out translate-x-0 w-96">
+              <motion.div
+                initial={{ x: 100, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                exit={{ x: 100, opacity: 0 }}
+                transition={{ duration: 0.3 }}
+                className="fixed top-4 right-4 bg-white p-4 rounded-lg shadow-lg z-50 w-96"
+              >
                 <div className="flex items-center justify-between mb-4">
                   <span className="font-semibold text-lg">Notifications</span>
                   <button onClick={() => setShowNotification(false)} className="text-gray-500 hover:text-gray-700 p-1 hover:bg-gray-100 rounded-full transition-colors">
@@ -138,120 +195,221 @@ function FormateurLayout() {
                     </div>
                   ))}
                 </div>
-              </div>
+              </motion.div>
             )}
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02, y: -5 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-6">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-indigo-500 rounded-md p-3">
-                    <Users className="h-6 w-6 text-white" />
+                  <div className="flex-shrink-0 bg-gradient-to-r from-indigo-500 to-indigo-600 rounded-xl p-4 shadow-inner">
+                    <Users className="h-7 w-7 text-white" />
                   </div>
-                  <div className="ml-5 w-0 flex-1">
+                  <div className="ml-6 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Stagiaires suivis</dt>
-                      <dd className="text-lg font-semibold text-gray-900">{statsData.stagiaires}</dd>
+                      <dd className="text-2xl font-bold text-gray-900 mt-1">{statsData.stagiaires}</dd>
+                      <div className="flex items-center mt-2 text-xs text-indigo-600">
+                        <span className="font-medium">+12%</span>
+                        <span className="ml-2">vs mois dernier</span>
+                      </div>
                     </dl>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02, y: -5 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-6">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-yellow-500 rounded-md p-3">
-                    <FileText className="h-6 w-6 text-white" />
+                  <div className="flex-shrink-0 bg-gradient-to-r from-amber-400 to-amber-500 rounded-xl p-4 shadow-inner">
+                    <FileText className="h-7 w-7 text-white" />
                   </div>
-                  <div className="ml-5 w-0 flex-1">
+                  <div className="ml-6 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Documents en attente</dt>
-                      <dd className="text-lg font-semibold text-gray-900">{statsData.documentsEnAttente}</dd>
+                      <dd className="text-2xl font-bold text-gray-900 mt-1">{statsData.documentsEnAttente}</dd>
+                      <div className="flex items-center mt-2 text-xs text-amber-600">
+                        <span className="font-medium">Urgent</span>
+                        <span className="ml-2">à traiter</span>
+                      </div>
                     </dl>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02, y: -5 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-6">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-purple-500 rounded-md p-3">
-                    <Calendar className="h-6 w-6 text-white" />
+                  <div className="flex-shrink-0 bg-gradient-to-r from-purple-500 to-purple-600 rounded-xl p-4 shadow-inner">
+                    <Calendar className="h-7 w-7 text-white" />
                   </div>
-                  <div className="ml-5 w-0 flex-1">
+                  <div className="ml-6 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Évaluations à passer</dt>
-                      <dd className="text-lg font-semibold text-gray-900">{statsData.evaluationsAPasser}</dd>
+                      <dd className="text-2xl font-bold text-gray-900 mt-1">{statsData.evaluationsAPasser}</dd>
+                      <div className="flex items-center mt-2 text-xs text-purple-600">
+                        <span className="font-medium">Cette semaine</span>
+                      </div>
                     </dl>
                   </div>
                 </div>
               </div>
-            </div>
-            <div className="bg-white overflow-hidden shadow rounded-lg">
-              <div className="p-5">
+            </motion.div>
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              whileHover={{ scale: 1.02, y: -5 }}
+              transition={{ type: "spring", stiffness: 300, damping: 20 }}
+              className="bg-white overflow-hidden shadow-lg rounded-xl hover:shadow-xl transition-all duration-300"
+            >
+              <div className="p-6">
                 <div className="flex items-center">
-                  <div className="flex-shrink-0 bg-green-500 rounded-md p-3">
-                    <Users className="h-6 w-6 text-white" />
+                  <div className="flex-shrink-0 bg-gradient-to-r from-emerald-500 to-emerald-600 rounded-xl p-4 shadow-inner">
+                    <Users className="h-7 w-7 text-white" />
                   </div>
-                  <div className="ml-5 w-0 flex-1">
+                  <div className="ml-6 w-0 flex-1">
                     <dl>
                       <dt className="text-sm font-medium text-gray-500 truncate">Stages en cours</dt>
-                      <dd className="text-lg font-semibold text-gray-900">{statsData.stagesEnCours}</dd>
+                      <dd className="text-2xl font-bold text-gray-900 mt-1">{statsData.stagesEnCours}</dd>
+                      <div className="flex items-center mt-2 text-xs text-emerald-600">
+                        <span className="font-medium">En progression</span>
+                      </div>
                     </dl>
                   </div>
                 </div>
               </div>
-            </div>
+            </motion.div>
           </div>
           <div className="mb-6 flex justify-end space-x-2">
-            <button
-              onClick={() => setSelectedPeriod('semaine')}
-              className={`px-4 py-2 rounded-lg ${selectedPeriod === 'semaine' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-            >
-              Semaine
-            </button>
-            <button
-              onClick={() => setSelectedPeriod('mois')}
-              className={`px-4 py-2 rounded-lg ${selectedPeriod === 'mois' ? 'bg-indigo-600 text-white' : 'bg-gray-200 text-gray-700'}`}
-            >
-              Mois
-            </button>
+            <div className="bg-gray-50 p-1 rounded-xl shadow-sm inline-flex space-x-1">
+              <button
+                onClick={() => setSelectedPeriod('semaine')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${selectedPeriod === 'semaine' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-indigo-600'}`}
+              >
+                Semaine
+              </button>
+              <button
+                onClick={() => setSelectedPeriod('mois')}
+                className={`px-4 py-2 rounded-lg font-medium transition-all duration-200 ${selectedPeriod === 'mois' ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-600 hover:text-indigo-600'}`}
+              >
+                Mois
+              </button>
+            </div>
           </div>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <div className="flex items-center justify-between mb-4">
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+            >
+              <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Progression des validations</h3>
-                <div className="flex items-center text-sm text-gray-500">
+                <div className="flex items-center text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
                   <Clock className="h-4 w-4 mr-1" />
                   <span>Mis à jour il y a 1h</span>
                 </div>
               </div>
               <div className="h-64">
-                <Line options={chartOptions} data={progressionData} />
+                <Line options={{
+                  ...chartOptions,
+                  plugins: {
+                    ...chartOptions.plugins,
+                    legend: {
+                      ...chartOptions.plugins.legend,
+                      labels: {
+                        usePointStyle: true,
+                        font: {
+                          size: 12
+                        }
+                      }
+                    }
+                  }
+                }} data={progressionData} />
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <div className="flex items-center justify-between mb-4">
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+            >
+              <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Répartition des évaluations</h3>
-                <div className="flex items-center text-sm text-gray-500">
+                <div className="flex items-center text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
                   <PieChart className="h-4 w-4 mr-1" />
                   <span>Total: {evaluationsData.datasets[0].data.reduce((a, b) => a + b, 0)}</span>
                 </div>
               </div>
               <div className="h-64">
-                <Pie data={evaluationsData} options={{ maintainAspectRatio: false }} />
+                <Pie data={evaluationsData} options={{
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      position: 'bottom',
+                      labels: {
+                        usePointStyle: true,
+                        padding: 20,
+                        font: {
+                          size: 12
+                        }
+                      }
+                    }
+                  }
+                }} />
               </div>
-            </div>
-            <div className="bg-white p-6 rounded-lg shadow-lg">
-              <div className="flex items-center justify-between mb-4">
+            </motion.div>
+            <motion.div
+              whileHover={{ scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 300 }}
+              className="bg-white p-6 rounded-xl shadow-lg hover:shadow-xl transition-shadow duration-300"
+            >
+              <div className="flex items-center justify-between mb-6">
                 <h3 className="text-lg font-semibold text-gray-900">Documents traités</h3>
-                <div className="flex items-center text-sm text-gray-500">
+                <div className="flex items-center text-sm text-gray-500 bg-gray-50 px-3 py-1 rounded-full">
                   <BarChartIcon className="h-4 w-4 mr-1" />
                   <span>Cette semaine</span>
                 </div>
               </div>
               <div className="h-64">
-                <Bar data={documentsData} options={{ maintainAspectRatio: false }} />
+                <Bar data={documentsData} options={{
+                  maintainAspectRatio: false,
+                  plugins: {
+                    legend: {
+                      display: false
+                    }
+                  },
+                  scales: {
+                    y: {
+                      beginAtZero: true,
+                      grid: {
+                        display: true,
+                        color: 'rgba(0, 0, 0, 0.1)'
+                      }
+                    },
+                    x: {
+                      grid: {
+                        display: false
+                      }
+                    }
+                  }
+                }} />
               </div>
-            </div>
+            </motion.div>
           </div>
           <div className="bg-white shadow overflow-hidden sm:rounded-lg mt-6">
             <Outlet />

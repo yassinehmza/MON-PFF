@@ -16,7 +16,7 @@ function About() {
             <h3 className="text-2xl font-semibold text-gray-900 mb-4">Le projet de fin d'étude:</h3>
             <p className="text-gray-600 leading-relaxed">
               Le PFE sert avant toute chose à mettre un pied dans le monde de l'entreprise. 
-              En effet, ces six mois en moyenne de stage font office de transition entre la vie 
+              En effet, ces trente jours en moyenne de stage font office de transition entre la vie 
               étudiante et la vie active. C'est pourquoi il est important de bien le choisir! 
               Le stage de fin d'études a pour vocation de développer chez le stagiaire des 
               savoir-faire et des savoir-être essentiels pour son avenir professionnel.
