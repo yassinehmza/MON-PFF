@@ -79,13 +79,12 @@ Route::middleware('auth:sanctum')->group(function () {
             return response()->json(['message' => 'Instructor dashboard data']);
         });
         Route::get('/dashboard-stats', [FormateurController::class, 'dashboardStats']);
+        Route::get('/stagiaires', [FormateurController::class, 'getStagiaires']);
         Route::get('/profile', function (Request $request) {
-            return response()->json([
-                'nom' => 'Nom du formateur',
-                'prenom' => 'Prénom du formateur',
-                'email' => 'email@example.com',
-                'specialite' => 'Spécialité du formateur'
-            ]);
+            $formateur = $request->user();
+            return response()->json($formateur);
         });
+        Route::put('/documents/{id}/validate', [DocumentController::class, 'validateDocument']);
+        Route::get('/documents/{id}/download', [DocumentController::class, 'download']);
     });
 });

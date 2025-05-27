@@ -7,6 +7,7 @@ use App\Models\Stage;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 
 class DocumentController extends Controller
 {
@@ -116,19 +117,22 @@ class DocumentController extends Controller
      */
     public function validateDocument(Request $request, $id)
     {
-        $validator = Validator::make($request->all(), [
-            'status' => 'required|string|in:valide,refuse',
-            'commentaire' => 'nullable|string',
+        $document = Document::findOrFail($id);
+        
+        $validated = $request->validate([
+            'status' => 'required|in:valide,refuse',
+            'commentaire' => 'nullable|string'
         ]);
 
-        if ($validator->fails()) {
-            return response()->json(['errors' => $validator->errors()], 422);
-        }
+        $document->update([
+            'status' => $validated['status'],
+            'commentaire' => $validated['commentaire'] ?? null
+        ]);
 
-        $document = Document::findOrFail($id);
-        $document->validateFile($request->status, $request->commentaire);
-
-        return response()->json(['message' => 'Document validé avec succès', 'document' => $document]);
+        return response()->json([
+            'message' => 'Document ' . ($validated['status'] === 'valide' ? 'validé' : 'refusé') . ' avec succès',
+            'document' => $document
+        ]);
     }
     
     /**
@@ -141,24 +145,24 @@ class DocumentController extends Controller
             $stagiaire = $request->user();
             
             // Log the authenticated user
-            \Log::info('Authenticated user', ['user' => $stagiaire]);
+            Log::info('Authenticated user', ['user' => $stagiaire]);
             
             // Get the student's stage
             $stage = $stagiaire->stage;
             
             if (!$stage) {
-                \Log::info('No stage found for student', ['student_id' => $stagiaire->id]);
+                Log::info('No stage found for student', ['student_id' => $stagiaire->id]);
                 return response()->json(['documents' => [], 'message' => 'Aucun stage trouvé']);
             }
             
-            \Log::info('Stage found', ['stage_id' => $stage->id]);
+            Log::info('Stage found', ['stage_id' => $stage->id]);
             
             // Get documents related to the student's stage
             $documents = Document::where('stage_id', $stage->id)->get();
             
             return response()->json(['documents' => $documents]);
         } catch (\Exception $e) {
-            \Log::error('Error fetching student documents', ['error' => $e->getMessage()]);
+            Log::error('Error fetching student documents', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Erreur lors de la récupération des documents: ' . $e->getMessage()], 500);
         }
     }
@@ -169,7 +173,7 @@ class DocumentController extends Controller
     public function stagiaireUpload(Request $request)
     {
         // Log the request data for debugging
-        \Log::info('Document upload request', [
+        Log::info('Document upload request', [
             'all' => $request->all(),
             'files' => $request->allFiles(),
             'has_file' => $request->hasFile('file'),
@@ -182,7 +186,7 @@ class DocumentController extends Controller
         ]);
 
         if ($validator->fails()) {
-            \Log::error('Document upload validation failed', ['errors' => $validator->errors()]);
+            Log::error('Document upload validation failed', ['errors' => $validator->errors()]);
             return response()->json(['errors' => $validator->errors()], 422);
         }
         
@@ -201,7 +205,7 @@ class DocumentController extends Controller
             $fileName = time() . '_' . $file->getClientOriginalName();
             $path = $file->storeAs('documents', $fileName);
             
-            \Log::info('File stored', ['path' => $path, 'fileName' => $fileName]);
+            Log::info('File stored', ['path' => $path, 'fileName' => $fileName]);
             
             $document = Document::create([
                 'stage_id' => $stage->id,
@@ -213,7 +217,7 @@ class DocumentController extends Controller
             
             return response()->json(['message' => 'Document créé avec succès', 'document' => $document], 201);
         } catch (\Exception $e) {
-            \Log::error('Error creating document', ['error' => $e->getMessage()]);
+            Log::error('Error creating document', ['error' => $e->getMessage()]);
             return response()->json(['error' => 'Erreur lors de la création du document: ' . $e->getMessage()], 500);
         }
     }
