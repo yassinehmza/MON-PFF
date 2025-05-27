@@ -4,6 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
 use App\Http\Controllers\AccountController;
+use App\Http\Controllers\StageController;
+use App\Http\Controllers\DocumentController;
+use App\Http\Controllers\FormateurController;
+use App\Http\Controllers\EntrepriseController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,41 +21,9 @@ use App\Http\Controllers\AccountController;
 */
 
 // Authentication Routes
-// In routes/api.php or routes/web.php
 Route::post('/login/administrateur', [AuthController::class, 'loginAdministrateur'])->name('login.administrateur');
 Route::post('/login/stagiaire', [AuthController::class, 'loginStagiaire'])->name('login.stagiaire');
 Route::post('/login/formateur', [AuthController::class, 'loginFormateur'])->name('login.formateur');
-
-
-
-use App\Http\Controllers\StageController;
-use App\Http\Controllers\DocumentController;
-
-// Add these routes inside your protected routes middleware for authenticated users
-Route::get('/formateurs', [App\Http\Controllers\AccountController::class, 'getFormateurs']);
-Route::middleware('auth:sanctum')->group(function () {
-    // Documents resource
-    Route::apiResource('documents', DocumentController::class);
-    Route::get('documents/{id}/download', [DocumentController::class, 'download']);
-
-
-    // Routes for stages management (only for administrators or those with the appropriate role)
-    Route::prefix('stages')->group(function () {
-        // Create a new stage
-        Route::post('/', [StageController::class, 'store']);
-        // Update an existing stage
-        Route::put('{id}', [StageController::class, 'update']);
-
-        // Get all stages
-        Route::get('/', [StageController::class, 'index']);
-
-        // Get a specific stage
-        Route::get('{id}', [StageController::class, 'show']);
-
-        // Delete a stage
-        Route::delete('{id}', [StageController::class, 'destroy']);
-    });
-});
 
 
 // Protected Routes for all authenticated users
@@ -81,12 +53,23 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', function () {
             return response()->json(['message' => 'Student dashboard data']);
         });
-        Route::put('/profile', [\App\Http\Controllers\AccountController::class, 'updateStagiaireProfile']);
-        Route::put('/password', [\App\Http\Controllers\AccountController::class, 'updateStagiairePassword']);
-        Route::get('/stages', [\App\Http\Controllers\StageController::class, 'stagiaireStages']);
-        Route::post('/stages', [\App\Http\Controllers\StageController::class, 'stagiaireStore']);
-        Route::put('/stages/{id}', [\App\Http\Controllers\StageController::class, 'stagiaireUpdate']);
-        Route::delete('/stages/{id}', [\App\Http\Controllers\StageController::class, 'stagiaireDestroy']);
+        Route::put('/profile', [AccountController::class, 'updateStagiaireProfile']);
+        Route::put('/password', [AccountController::class, 'updateStagiairePassword']);
+        
+        // Add routes for fetching formateurs and entreprises
+        Route::get('/formateurs', [FormateurController::class, 'getActiveFormateurs']);
+        Route::get('/entreprises', [EntrepriseController::class, 'getActiveEntreprises']);
+        
+        // Stage management routes
+        Route::get('/stages', [StageController::class, 'stagiaireStages']);
+        Route::post('/stages', [StageController::class, 'stagiaireStore']);
+        Route::put('/stages/{id}', [StageController::class, 'stagiaireUpdate']);
+        Route::delete('/stages/{id}', [StageController::class, 'stagiaireDestroy']);
+        
+        // Document routes for students
+        Route::get('/documents', [DocumentController::class, 'stagiaireDocuments']);
+        Route::post('/documents', [DocumentController::class, 'stagiaireUpload']);
+        Route::delete('/documents/{id}', [DocumentController::class, 'stagiaireDeleteDocument']);
     });
     
     // Routes for instructors only
@@ -95,7 +78,7 @@ Route::middleware('auth:sanctum')->group(function () {
         Route::get('/dashboard', function () {
             return response()->json(['message' => 'Instructor dashboard data']);
         });
-        Route::get('/dashboard-stats', [\App\Http\Controllers\FormateurController::class, 'dashboardStats']);
+        Route::get('/dashboard-stats', [FormateurController::class, 'dashboardStats']);
         Route::get('/profile', function (Request $request) {
             return response()->json([
                 'nom' => 'Nom du formateur',

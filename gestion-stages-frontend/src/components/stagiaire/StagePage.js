@@ -35,6 +35,7 @@ function StagePage() {
 
   const [showForm, setShowForm] = useState(false);
   const [editingStage, setEditingStage] = useState(null);
+  // Initialize all form fields with empty strings instead of undefined
   const [formData, setFormData] = useState({
     id_formateur: '',
     id_entreprise: '',

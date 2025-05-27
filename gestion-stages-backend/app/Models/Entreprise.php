@@ -24,7 +24,8 @@ class Entreprise extends Model
         'secteur',
         'telephone',
         'email',
-        'contact_nom'
+        'contact_nom',
+        'active'
     ];
 
     /**

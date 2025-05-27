@@ -11,11 +11,11 @@ const api = axios.create({
   withCredentials: true // Important for cookies/CSRF to work properly
 });
 
-// Fetch all entreprises
-export const fetchEntreprises = () => api.get('/entreprises');
+// Fetch all active entreprises for stage assignments
+export const fetchEntreprises = () => api.get('/etudiant/entreprises');
 
-// Fetch all formateurs (requires backend endpoint, see PHP changes)
-export const fetchFormateurs = () => api.get('/formateurs');
+// Fetch all active formateurs for stage assignments
+export const fetchFormateurs = () => api.get('/etudiant/formateurs');
 
 // Submit a new stage (for authenticated stagiaire)
 export const submitStage = (formData) => api.post('/etudiant/stages', formData);
@@ -27,6 +27,13 @@ api.interceptors.request.use(
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+    
+    // For file uploads, don't manually set Content-Type
+    if (config.data instanceof FormData) {
+      // Let axios set the Content-Type header with the correct boundary
+      delete config.headers['Content-Type'];
+    }
+    
     return config;
   },
   (error) => {

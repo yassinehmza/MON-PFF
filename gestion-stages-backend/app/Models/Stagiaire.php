@@ -55,6 +55,14 @@ class Stagiaire extends Authenticatable
     {
         return $this->hasMany(Stage::class, 'id_stagiaire');
     }
+    
+    /**
+     * Get the current active stage for the stagiaire.
+     */
+    public function stage()
+    {
+        return $this->hasOne(Stage::class, 'id_stagiaire')->latest();
+    }
 
     /**
      * Update the profile of the stagiaire.

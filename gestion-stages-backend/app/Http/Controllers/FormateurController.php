@@ -2,7 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Formateur;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class FormateurController extends Controller
 {
@@ -18,5 +20,18 @@ class FormateurController extends Controller
             'validated_documents' => 3,
             'rejected_documents' => 2,
         ]);
+    }
+
+    /**
+     * Get all active formateurs for stage assignments.
+     */
+    public function getActiveFormateurs()
+    {
+        $formateurs = DB::table('formateurs')
+            ->select('id', DB::raw("CONCAT(nom, ' ', prenom) AS name"))
+            ->orderBy('nom')
+            ->get();
+
+        return response()->json(['formateurs' => $formateurs]);
     }
 }

@@ -99,4 +99,17 @@ class EntrepriseController extends Controller
 
         return response()->json(['stages' => $stages]);
     }
+
+    /**
+     * Get all active entreprises for stage assignments
+     */
+    public function getActiveEntreprises()
+    {
+        $entreprises = Entreprise::select('id', 'nom')
+            ->where('active', true)
+            ->orderBy('nom')
+            ->get();
+
+        return response()->json(['entreprises' => $entreprises]);
+    }
 }
